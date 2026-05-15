@@ -9,9 +9,9 @@
   <title>PNW Wheelie</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
-
+ 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
+ 
     html, body {
       width: 100%;
       height: 100%;
@@ -23,9 +23,9 @@
       user-select: none;
       -webkit-user-select: none;
     }
-
+ 
     #game { position: fixed; inset: 0; display: block; }
-
+ 
     .hud {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -37,10 +37,10 @@
       z-index: 10;
       padding-top: max(14px, env(safe-area-inset-top));
     }
-
+ 
     .hud-left, .hud-right { display: flex; flex-direction: column; gap: 2px; }
     .hud-right { align-items: flex-end; }
-
+ 
     .label {
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
@@ -48,7 +48,7 @@
       color: rgba(232, 230, 220, 0.55);
       text-transform: uppercase;
     }
-
+ 
     .value {
       font-size: 28px;
       font-weight: 700;
@@ -56,9 +56,9 @@
       color: #d4ff3a;
       text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
-
+ 
     .value.best { color: #e8e6dc; font-size: 18px; }
-
+ 
     .controls {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -68,7 +68,7 @@
       z-index: 5;
       padding-bottom: env(safe-area-inset-bottom);
     }
-
+ 
     .pedal {
       flex: 1;
       display: flex;
@@ -83,11 +83,11 @@
       background: rgba(0, 0, 0, 0.15);
       cursor: pointer;
     }
-
+ 
     .pedal.brake { border-right: 1px solid rgba(255,255,255,0.05); }
     .pedal.active.brake { background: rgba(255, 90, 78, 0.25); color: #ff5a4e; }
     .pedal.active.gas   { background: rgba(212, 255, 58, 0.20); color: #d4ff3a; }
-
+ 
     .overlay {
       position: fixed;
       inset: 0;
@@ -101,9 +101,9 @@
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
-
+ 
     .overlay.hidden { display: none; }
-
+ 
     .title {
       font-size: 44px;
       font-weight: 700;
@@ -112,9 +112,9 @@
       margin-bottom: 8px;
       text-align: center;
     }
-
+ 
     .title .accent { color: #d4ff3a; }
-
+ 
     .subtitle {
       font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
@@ -124,7 +124,7 @@
       margin-bottom: 32px;
       text-align: center;
     }
-
+ 
     .instructions {
       font-size: 15px;
       color: rgba(232, 230, 220, 0.75);
@@ -133,7 +133,7 @@
       margin-bottom: 32px;
       line-height: 1.6;
     }
-
+ 
     .instructions strong { color: #d4ff3a; }
     .instructions .key {
       display: inline-block;
@@ -144,9 +144,9 @@
       border-radius: 4px;
       margin: 0 2px;
     }
-
+ 
     .big-stat { text-align: center; margin-bottom: 28px; }
-
+ 
     .big-stat .num {
       font-size: 64px;
       font-weight: 700;
@@ -154,7 +154,7 @@
       letter-spacing: -0.04em;
       line-height: 1;
     }
-
+ 
     .big-stat .unit {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
@@ -163,7 +163,7 @@
       text-transform: uppercase;
       margin-top: 8px;
     }
-
+ 
     .crash-msg {
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
@@ -173,7 +173,7 @@
       margin-bottom: 20px;
       text-align: center;
     }
-
+ 
     button {
       background: #d4ff3a;
       color: #0d0f0c;
@@ -187,9 +187,9 @@
       cursor: pointer;
       text-transform: uppercase;
     }
-
+ 
     button:active { transform: scale(0.97); }
-
+ 
     .version {
       position: fixed;
       bottom: 4px;
@@ -203,9 +203,9 @@
   </style>
 </head>
 <body>
-
+ 
   <canvas id="game"></canvas>
-
+ 
   <div class="hud">
     <div class="hud-left">
       <div class="label">DISTANCE</div>
@@ -216,12 +216,12 @@
       <div class="value best" id="best">0 ft</div>
     </div>
   </div>
-
+ 
   <div class="controls" id="controls">
     <div class="pedal brake" id="brake">BRAKE</div>
     <div class="pedal gas" id="gas">GAS</div>
   </div>
-
+ 
   <div class="overlay" id="start-screen">
     <div class="title">PNW<br><span class="accent">WHEELIE</span></div>
     <div class="subtitle">// cascade highway edition</div>
@@ -232,7 +232,7 @@
     </div>
     <button id="start-btn">RIDE</button>
   </div>
-
+ 
   <div class="overlay hidden" id="end-screen">
     <div class="crash-msg" id="crash-msg">WIPED OUT</div>
     <div class="big-stat">
@@ -241,9 +241,9 @@
     </div>
     <button id="restart-btn">RIDE AGAIN</button>
   </div>
-
-  <div class="version">v0.2</div>
-
+ 
+  <div class="version">v0.3</div>
+ 
   <script>
     const CONFIG = {
       GAS_POWER:        0.0028,
@@ -258,17 +258,15 @@
       FEET_PER_FRAME:   0.55,
       RAIN_COUNT:       45,
     };
-
+ 
     const PNW_TOWNS = [
-      "FORKS", "SNOQUALMIE", "ABERDEEN", "SEQUIM", "OLYMPIA",
-      "MT RAINIER", "HOOD RIVER", "CRESCENT LAKE", "MT HOOD",
-      "DECEPTION PASS", "STEVENS PASS", "PORT ANGELES", "ASTORIA"
+      "SAMMAMISH", "REDMOND", "ISSAQUAH", "SNOQUALMIE", "GRIFFOPOTOMUS"
     ];
-
+ 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     let W, H;
-
+ 
     function resize() {
       W = window.innerWidth;
       H = window.innerHeight;
@@ -280,7 +278,7 @@
     }
     window.addEventListener('resize', resize);
     resize();
-
+ 
     let state = {
       running: false,
       angle: CONFIG.START_ANGLE,
@@ -296,7 +294,7 @@
       signOffset: -800,
       nextSignTown: PNW_TOWNS[0],
     };
-
+ 
     function initRain() {
       state.rain = [];
       for (let i = 0; i < CONFIG.RAIN_COUNT; i++) {
@@ -308,15 +306,15 @@
         });
       }
     }
-
+ 
     document.getElementById('best').textContent = Math.floor(state.best) + ' ft';
-
+ 
     const gasEl = document.getElementById('gas');
     const brakeEl = document.getElementById('brake');
-
+ 
     function setGas(on)   { state.gas = on;   gasEl.classList.toggle('active', on); }
     function setBrake(on) { state.brake = on; brakeEl.classList.toggle('active', on); }
-
+ 
     function attachPedal(el, setter) {
       el.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, { passive: false });
       el.addEventListener('touchend',   (e) => { e.preventDefault(); setter(false); }, { passive: false });
@@ -327,7 +325,7 @@
     }
     attachPedal(gasEl,   setGas);
     attachPedal(brakeEl, setBrake);
-
+ 
     window.addEventListener('keydown', (e) => {
       if (e.repeat) return;
       if (e.key === 'ArrowUp'   || e.key === 'w' || e.key === 'W') setGas(true);
@@ -338,14 +336,14 @@
       if (e.key === 'ArrowUp'   || e.key === 'w' || e.key === 'W') setGas(false);
       if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') setBrake(false);
     });
-
+ 
     document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
-
+ 
     document.getElementById('start-btn').addEventListener('click', startGame);
     document.getElementById('restart-btn').addEventListener('click', startGame);
     document.getElementById('start-btn').addEventListener('touchend', (e) => { e.preventDefault(); startGame(); });
     document.getElementById('restart-btn').addEventListener('touchend', (e) => { e.preventDefault(); startGame(); });
-
+ 
     function startGame() {
       state.angle = CONFIG.START_ANGLE;
       state.angleVel = CONFIG.START_VELOCITY;
@@ -355,17 +353,17 @@
       state.signOffset = W + 200;
       state.nextSignTown = PNW_TOWNS[Math.floor(Math.random() * PNW_TOWNS.length)];
       initRain();
-
+ 
       gasEl.classList.remove('active');
       brakeEl.classList.remove('active');
-
+ 
       document.getElementById('start-screen').classList.add('hidden');
       document.getElementById('end-screen').classList.add('hidden');
-
+ 
       state.running = true;
       requestAnimationFrame(loop);
     }
-
+ 
     function endGame(reason) {
       if (!state.running) return;
       state.running = false;
@@ -382,21 +380,21 @@
         reason === 'flip' ? `FLIPPED NEAR ${town}` : `WHEELIE DROPPED NEAR ${town}`;
       document.getElementById('end-screen').classList.remove('hidden');
     }
-
+ 
     function updatePhysics() {
       if (state.gas)   state.angleVel += CONFIG.GAS_POWER;
       if (state.brake) state.angleVel -= CONFIG.BRAKE_POWER;
       state.angleVel -= CONFIG.GRAVITY;
       state.angleVel *= CONFIG.DAMPING;
       state.angle += state.angleVel;
-
+ 
       if (state.angle < CONFIG.WHEELIE_MIN) { endGame('drop'); return; }
       if (state.angle > CONFIG.WHEELIE_MAX) { endGame('flip'); return; }
-
+ 
       state.distance += CONFIG.FEET_PER_FRAME;
       document.getElementById('distance').textContent = Math.floor(state.distance) + ' ft';
     }
-
+ 
     function drawSky() {
       const grad = ctx.createLinearGradient(0, 0, 0, H);
       grad.addColorStop(0, '#2d3d44');
@@ -405,7 +403,7 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
     }
-
+ 
     function drawMountains() {
       ctx.fillStyle = 'rgba(40, 55, 60, 0.85)';
       ctx.beginPath();
@@ -422,7 +420,7 @@
       ctx.lineTo(0, H);
       ctx.closePath();
       ctx.fill();
-
+ 
       const rainierX = ((W * 0.7 - state.bgOffset * 0.15) % (W + 400) + W + 400) % (W + 400) - 200;
       ctx.fillStyle = 'rgba(55, 70, 75, 0.9)';
       ctx.beginPath();
@@ -433,7 +431,7 @@
       ctx.lineTo(rainierX + 200, H * 0.62);
       ctx.closePath();
       ctx.fill();
-
+ 
       ctx.fillStyle = 'rgba(220, 225, 220, 0.7)';
       ctx.beginPath();
       ctx.moveTo(rainierX - 45, H * 0.62 - 135);
@@ -445,7 +443,7 @@
       ctx.closePath();
       ctx.fill();
     }
-
+ 
     function drawTrees() {
       ctx.fillStyle = 'rgba(28, 42, 35, 0.95)';
       const treeSpacing = 55;
@@ -469,7 +467,7 @@
         ctx.fill();
       }
     }
-
+ 
     function drawRoadSign() {
       state.signOffset -= CONFIG.SPEED * 0.7;
       if (state.signOffset < -200) {
@@ -495,7 +493,7 @@
         ctx.fillText(miles + ' MI', x + 40, y + 1);
       }
     }
-
+ 
     function drawRoad() {
       const roadY = H * 0.78;
       const grad = ctx.createLinearGradient(0, roadY, 0, H);
@@ -504,7 +502,7 @@
       grad.addColorStop(1, '#0e1112');
       ctx.fillStyle = grad;
       ctx.fillRect(0, roadY, W, H - roadY);
-
+ 
       ctx.strokeStyle = 'rgba(140, 160, 165, 0.08)';
       ctx.lineWidth = 1;
       for (let i = 0; i < 8; i++) {
@@ -514,7 +512,7 @@
         ctx.lineTo(W, y);
         ctx.stroke();
       }
-
+ 
       ctx.strokeStyle = 'rgba(245, 220, 100, 0.4)';
       ctx.lineWidth = 4;
       ctx.setLineDash([30, 25]);
@@ -525,7 +523,7 @@
       ctx.stroke();
       ctx.setLineDash([]);
     }
-
+ 
     function drawRain() {
       ctx.strokeStyle = 'rgba(200, 215, 220, 0.35)';
       ctx.lineWidth = 1;
@@ -540,25 +538,25 @@
         ctx.stroke();
       }
     }
-
+ 
     function drawBike() {
       const bikeX = W * 0.3;
       const bikeY = H * 0.78 + 8;
       const angle = -state.angle;
-
+ 
       ctx.save();
       ctx.translate(bikeX, bikeY);
       ctx.rotate(angle);
-
+ 
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath();
       ctx.ellipse(20, 25, 55, 5, 0, 0, Math.PI * 2);
       ctx.fill();
-
+ 
       const wheelR = 22;
       const tireColor = '#1a1a1a';
       const treadColor = '#2a2a2a';
-
+ 
       ctx.fillStyle = tireColor;
       ctx.beginPath(); ctx.arc(-25, 0, wheelR, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = treadColor;
@@ -568,7 +566,7 @@
       }
       ctx.fillStyle = '#888';
       ctx.beginPath(); ctx.arc(-25, 0, 5, 0, Math.PI * 2); ctx.fill();
-
+ 
       ctx.fillStyle = tireColor;
       ctx.beginPath(); ctx.arc(35, 0, wheelR, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = treadColor;
@@ -578,7 +576,7 @@
       }
       ctx.fillStyle = '#888';
       ctx.beginPath(); ctx.arc(35, 0, 5, 0, Math.PI * 2); ctx.fill();
-
+ 
       ctx.fillStyle = '#d4ff3a';
       ctx.beginPath();
       ctx.moveTo(-20, -8);
@@ -588,7 +586,7 @@
       ctx.lineTo(-5, -2);
       ctx.closePath();
       ctx.fill();
-
+ 
       ctx.fillStyle = '#2a2a2a';
       ctx.beginPath();
       ctx.moveTo(-22, -10);
@@ -597,14 +595,14 @@
       ctx.lineTo(-15, -6);
       ctx.closePath();
       ctx.fill();
-
+ 
       ctx.strokeStyle = '#aaa';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(35, 0);
       ctx.lineTo(25, -18);
       ctx.stroke();
-
+ 
       ctx.strokeStyle = '#1a1a1a';
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -612,7 +610,7 @@
       ctx.lineTo(20, -28);
       ctx.lineTo(32, -28);
       ctx.stroke();
-
+ 
       ctx.fillStyle = '#1f3a5c';
       ctx.beginPath();
       ctx.moveTo(-2, -18);
@@ -622,7 +620,7 @@
       ctx.lineTo(5, -14);
       ctx.closePath();
       ctx.fill();
-
+ 
       ctx.fillStyle = '#ff5a4e';
       ctx.beginPath();
       ctx.arc(12, -36, 8, 0, Math.PI * 2);
@@ -631,34 +629,34 @@
       ctx.beginPath();
       ctx.arc(15, -36, 5, -Math.PI * 0.3, Math.PI * 0.4);
       ctx.fill();
-
+ 
       ctx.strokeStyle = '#1f3a5c';
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(14, -26);
       ctx.lineTo(26, -28);
       ctx.stroke();
-
+ 
       ctx.strokeStyle = '#1f3a5c';
       ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.moveTo(5, -16);
       ctx.lineTo(-5, -2);
       ctx.stroke();
-
+ 
       ctx.restore();
     }
-
+ 
     function loop() {
       if (!state.running) return;
-
+ 
       state.bgOffset += CONFIG.SPEED * 0.2;
       state.midOffset += CONFIG.SPEED * 0.6;
       state.fgOffset += CONFIG.SPEED;
-
+ 
       updatePhysics();
       if (!state.running) return;
-
+ 
       drawSky();
       drawMountains();
       drawTrees();
@@ -666,10 +664,10 @@
       drawRoad();
       drawRain();
       drawBike();
-
+ 
       requestAnimationFrame(loop);
     }
-
+ 
     initRain();
     drawSky();
     drawMountains();
@@ -677,6 +675,6 @@
     drawRoad();
     drawRain();
   </script>
-
+ 
 </body>
 </html>
