@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PNW Wheelie">
+  <title>PNW Wheelie</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #1a2228;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      color: #e8e6dc;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #game {
+      position: fixed;
+      inset: 0;
+      display: block;
+    }
+
+    /* ---------- HUD ---------- */
+    .hud {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      z-index: 10;
+      padding-top: max(14px, env(safe-area-inset-top));
+    }
+
+    .hud-left, .hud-right { display: flex; flex-direction: column; gap: 2px; }
+    .hud-right { align-items: flex-end; }
+
+    .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(232, 230, 220, 0.55);
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #d4ff3a;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .value.best { color: #e8e6dc; font-size: 18px; }
+
+    /* ---------- CONTROLS ---------- */
+    .controls {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      height: 35vh;
+      z-index: 5;
+      pointer-events: auto;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .pedal {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 230, 220, 0.4);
+      transition: background 0.05s;
+    }
+
+    .pedal.brake { border-right: 1px solid rgba(255,255,255,0.04); }
+    .pedal.gas {}
+
+    .pedal.active.brake { background: rgba(255, 90, 78, 0.12); color: #ff5a4e; }
+    .pedal.active.gas   { background: rgba(212, 255, 58, 0.12); color: #d4ff3a; }
+
+    /* ---------- OVERLAYS ---------- */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 15, 12, 0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      z-index: 20;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .overlay.hidden { display: none; }
+
+    .title {
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .title .accent { color: #d4ff3a; }
+
+    .subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: rgba(232, 230, 220, 0.55);
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .instructions {
+      font-size: 15px;
+      color: rgba(232, 230, 220, 0.75);
+      text-align: center;
+      max-width: 320px;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .instructions strong { color: #d4ff3a; }
+
+    .big-stat {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .big-stat .num {
+      font-size: 64px;
+      font-weight: 700;
+      color: #d4ff3a;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .big-stat .unit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 230, 220, 0.55);
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .crash-msg {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #ff5a4e;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    button {
+      background: #d4ff3a;
+      color: #0d0f0c;
+      border: none;
+      padding: 16px 40px;
+      border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .back-link {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(232, 230, 220, 0.4);
+      text-decoration: none;
+      text-transform: uppercase;
+      z-index: 11;
+      padding: 14px;
+    }
+
+    .version {
+      position: fixed;
+      bottom: 4px;
+      right: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: rgba(232, 230, 220, 0.25);
+      z-index: 6;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="game"></canvas>
+
+  <div class="hud">
+    <div class="hud-left">
+      <div class="label">DISTANCE</div>
+      <div class="value" id="distance">0 ft</div>
+    </div>
+    <div class="hud-right">
+      <div class="label">BEST</div>
+      <div class="value best" id="best">0 ft</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="pedal brake" id="brake">BRAKE</div>
+    <div class="pedal gas" id="gas">GAS</div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="overlay" id="start-screen">
+    <div class="title">PNW<br><span class="accent">WHEELIE</span></div>
+    <div class="subtitle">// cascade highway edition</div>
+    <div class="instructions">
+      Hold <strong>GAS</strong> to pull the front wheel up.<br>
+      Hold <strong>BRAKE</strong> to bring it back down.<br><br>
+      Keep the wheelie going as long as you can.
+    </div>
+    <button onclick="startGame()">RIDE</button>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div class="overlay hidden" id="end-screen">
+    <div class="crash-msg" id="crash-msg">WIPED OUT</div>
+    <div class="big-stat">
+      <div class="num" id="final-distance">0</div>
+      <div class="unit">feet · personal best: <span id="final-best">0</span></div>
+    </div>
+    <button onclick="startGame()">RIDE AGAIN</button>
+  </div>
+
+  <div class="version">v0.1</div>
+
+  <script>
+    // ============================================================
+    // PNW WHEELIE
+    // ------------------------------------------------------------
+    // Tunable values are in the CONFIG object below.
+    // Bump up GAS_POWER or BRAKE_POWER to make controls more sensitive.
+    // Lower GRAVITY to make wheelies easier to hold.
+    // ============================================================
+
+    const CONFIG = {
+      // ----- PHYSICS (forgiving settings) -----
+      GAS_POWER:        0.0028,   // how fast gas raises the wheel
+      BRAKE_POWER:      0.0032,   // how fast brake lowers the wheel
+      GRAVITY:          0.0014,   // constant pull on the front wheel
+      DAMPING:          0.985,    // velocity decay — closer to 1 = floatier
+      WHEELIE_MIN:      0.25,     // below this angle, wheel touches ground
+      WHEELIE_MAX:      1.45,     // above this angle, bike flips back
+
+      // ----- GAMEPLAY -----
+      SPEED:            8.5,      // forward speed (visual)
+      FEET_PER_FRAME:   0.55,     // distance gained per frame
+
+      // ----- SCENERY -----
+      RAIN_COUNT:       45,
+    };
+
+    const PNW_TOWNS = [
+      "FORKS", "SNOQUALMIE", "ABERDEEN", "SEQUIM", "OLYMPIA",
+      "MT RAINIER", "HOOD RIVER", "CRESCENT LAKE", "MT HOOD",
+      "DECEPTION PASS", "STEVENS PASS", "PORT ANGELES", "ASTORIA"
+    ];
+
+    // ============================================================
+    // SETUP
+    // ============================================================
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * window.devicePixelRatio;
+      canvas.height = H * window.devicePixelRatio;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ============================================================
+    // STATE
+    // ============================================================
+    let state = {
+      running: false,
+      angle: 0,            // 0 = both wheels down, ~0.9 = ideal wheelie
+      angleVel: 0,
+      gas: false,
+      brake: false,
+      distance: 0,
+      best: parseFloat(localStorage.getItem('pnw_wheelie_best') || '0'),
+      bgOffset: 0,
+      midOffset: 0,
+      fgOffset: 0,
+      rain: [],
+      signOffset: -800,
+      nextSignTown: PNW_TOWNS[0],
+    };
+
+    function initRain() {
+      state.rain = [];
+      for (let i = 0; i < CONFIG.RAIN_COUNT; i++) {
+        state.rain.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          speed: 7 + Math.random() * 8,
+          length: 8 + Math.random() * 10,
+        });
+      }
+    }
+
+    document.getElementById('best').textContent = Math.floor(state.best) + ' ft';
+
+    // ============================================================
+    // CONTROLS
+    // ============================================================
+    function setupPedal(el, key) {
+      const press = (e) => { e.preventDefault(); state[key] = true;  el.classList.add('active'); };
+      const release = (e) => { e.preventDefault(); state[key] = false; el.classList.remove('active'); };
+      el.addEventListener('touchstart', press, { passive: false });
+      el.addEventListener('touchend', release, { passive: false });
+      el.addEventListener('touchcancel', release, { passive: false });
+      el.addEventListener('mousedown', press);
+      el.addEventListener('mouseup', release);
+      el.addEventListener('mouseleave', release);
+    }
+    setupPedal(document.getElementById('gas'), 'gas');
+    setupPedal(document.getElementById('brake'), 'brake');
+
+    // prevent iOS bounce/scroll on the canvas
+    document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+    // ============================================================
+    // GAME FLOW
+    // ============================================================
+    function startGame() {
+      state.running = true;
+      state.angle = 0;
+      state.angleVel = 0;
+      state.distance = 0;
+      state.gas = false;
+      state.brake = false;
+      state.signOffset = W + 200;
+      state.nextSignTown = PNW_TOWNS[Math.floor(Math.random() * PNW_TOWNS.length)];
+      initRain();
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('end-screen').classList.add('hidden');
+      document.getElementById('brake').classList.remove('active');
+      document.getElementById('gas').classList.remove('active');
+      requestAnimationFrame(loop);
+    }
+
+    function endGame(reason) {
+      state.running = false;
+      const finalDist = Math.floor(state.distance);
+      if (finalDist > state.best) {
+        state.best = finalDist;
+        localStorage.setItem('pnw_wheelie_best', state.best);
+      }
+      document.getElementById('best').textContent = Math.floor(state.best) + ' ft';
+      document.getElementById('final-distance').textContent = finalDist;
+      document.getElementById('final-best').textContent = Math.floor(state.best);
+      const town = PNW_TOWNS[Math.floor(Math.random() * PNW_TOWNS.length)];
+      document.getElementById('crash-msg').textContent =
+        reason === 'flip' ? `FLIPPED NEAR ${town}` : `WHEELIE DROPPED NEAR ${town}`;
+      document.getElementById('end-screen').classList.remove('hidden');
+    }
+
+    // ============================================================
+    // PHYSICS
+    // ============================================================
+    function updatePhysics() {
+      if (state.gas)   state.angleVel += CONFIG.GAS_POWER;
+      if (state.brake) state.angleVel -= CONFIG.BRAKE_POWER;
+      state.angleVel -= CONFIG.GRAVITY;     // constant downward pull
+      state.angleVel *= CONFIG.DAMPING;
+      state.angle += state.angleVel;
+
+      if (state.angle < CONFIG.WHEELIE_MIN) {
+        endGame('drop');
+        return;
+      }
+      if (state.angle > CONFIG.WHEELIE_MAX) {
+        endGame('flip');
+        return;
+      }
+
+      // distance only counts while wheelie is up
+      state.distance += CONFIG.FEET_PER_FRAME;
+      document.getElementById('distance').textContent = Math.floor(state.distance) + ' ft';
+    }
+
+    // ============================================================
+    // RENDER — Pacific Northwest scene
+    // ============================================================
+    function drawSky() {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#2d3d44');
+      grad.addColorStop(0.6, '#4a5d63');
+      grad.addColorStop(1, '#6b7a78');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function drawMountains() {
+      // Far Cascades silhouette
+      ctx.fillStyle = 'rgba(40, 55, 60, 0.85)';
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.62);
+      const peaks = 7;
+      for (let i = 0; i <= peaks; i++) {
+        const x = (i / peaks) * W;
+        const baseY = H * 0.62;
+        const peakOffset = ((i * 137 + Math.floor(state.bgOffset * 0.1)) % 100) - 50;
+        const y = baseY - 80 - Math.abs(peakOffset);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.closePath();
+      ctx.fill();
+
+      // Mt Rainier — single big peak
+      const rainierX = ((W * 0.7 - state.bgOffset * 0.15) % (W + 400) + W + 400) % (W + 400) - 200;
+      ctx.fillStyle = 'rgba(55, 70, 75, 0.9)';
+      ctx.beginPath();
+      ctx.moveTo(rainierX - 180, H * 0.62);
+      ctx.lineTo(rainierX - 40, H * 0.62 - 140);
+      ctx.lineTo(rainierX + 20, H * 0.62 - 175);
+      ctx.lineTo(rainierX + 80, H * 0.62 - 130);
+      ctx.lineTo(rainierX + 200, H * 0.62);
+      ctx.closePath();
+      ctx.fill();
+
+      // snow cap
+      ctx.fillStyle = 'rgba(220, 225, 220, 0.7)';
+      ctx.beginPath();
+      ctx.moveTo(rainierX - 45, H * 0.62 - 135);
+      ctx.lineTo(rainierX + 20, H * 0.62 - 175);
+      ctx.lineTo(rainierX + 80, H * 0.62 - 130);
+      ctx.lineTo(rainierX + 60, H * 0.62 - 115);
+      ctx.lineTo(rainierX + 20, H * 0.62 - 140);
+      ctx.lineTo(rainierX - 20, H * 0.62 - 110);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawTrees() {
+      // mid-ground evergreens
+      ctx.fillStyle = 'rgba(28, 42, 35, 0.95)';
+      const treeSpacing = 55;
+      const treeRow = H * 0.72;
+      const offset = state.midOffset % treeSpacing;
+      for (let x = -offset; x < W + treeSpacing; x += treeSpacing) {
+        const heightVar = ((Math.floor((x + state.midOffset) / treeSpacing) * 71) % 30);
+        const treeH = 90 + heightVar;
+        // Douglas fir shape — triangle stack
+        ctx.beginPath();
+        ctx.moveTo(x, treeRow);
+        ctx.lineTo(x - 18, treeRow - treeH * 0.35);
+        ctx.lineTo(x - 8, treeRow - treeH * 0.35);
+        ctx.lineTo(x - 22, treeRow - treeH * 0.65);
+        ctx.lineTo(x - 10, treeRow - treeH * 0.65);
+        ctx.lineTo(x, treeRow - treeH);
+        ctx.lineTo(x + 10, treeRow - treeH * 0.65);
+        ctx.lineTo(x + 22, treeRow - treeH * 0.65);
+        ctx.lineTo(x + 8, treeRow - treeH * 0.35);
+        ctx.lineTo(x + 18, treeRow - treeH * 0.35);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    function drawRoadSign() {
+      // Slide a road sign across periodically
+      state.signOffset -= CONFIG.SPEED * 0.7;
+      if (state.signOffset < -200) {
+        state.signOffset = W + 200;
+        state.nextSignTown = PNW_TOWNS[Math.floor(Math.random() * PNW_TOWNS.length)];
+      }
+      const x = state.signOffset;
+      const y = H * 0.55;
+      if (x > -200 && x < W + 200) {
+        // post
+        ctx.fillStyle = '#3a3a3a';
+        ctx.fillRect(x + 38, y, 4, 80);
+        // sign
+        ctx.fillStyle = '#4a6b3a';
+        ctx.fillRect(x, y - 30, 80, 38);
+        ctx.strokeStyle = '#e8e6dc';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x + 2, y - 28, 76, 34);
+        // text
+        ctx.fillStyle = '#e8e6dc';
+        ctx.font = 'bold 10px "Space Grotesk", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(state.nextSignTown, x + 40, y - 13);
+        ctx.font = '8px "JetBrains Mono", monospace';
+        const miles = Math.max(1, Math.floor((W + 200 - state.signOffset) / 30));
+        ctx.fillText(miles + ' MI', x + 40, y + 1);
+      }
+    }
+
+    function drawRoad() {
+      // wet asphalt
+      const roadY = H * 0.78;
+      const grad = ctx.createLinearGradient(0, roadY, 0, H);
+      grad.addColorStop(0, '#1a1d1e');
+      grad.addColorStop(0.3, '#252a2c');
+      grad.addColorStop(1, '#0e1112');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, roadY, W, H - roadY);
+
+      // wet reflections — subtle horizontal streaks
+      ctx.strokeStyle = 'rgba(140, 160, 165, 0.08)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 8; i++) {
+        const y = roadY + 20 + i * 15;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+
+      // center line dashes
+      ctx.strokeStyle = 'rgba(245, 220, 100, 0.4)';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([30, 25]);
+      ctx.lineDashOffset = state.fgOffset % 55;
+      ctx.beginPath();
+      ctx.moveTo(0, roadY + 50);
+      ctx.lineTo(W, roadY + 50);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawRain() {
+      ctx.strokeStyle = 'rgba(200, 215, 220, 0.35)';
+      ctx.lineWidth = 1;
+      for (const drop of state.rain) {
+        drop.y += drop.speed;
+        drop.x -= 2;
+        if (drop.y > H) { drop.y = -20; drop.x = Math.random() * W + 100; }
+        if (drop.x < 0) { drop.x = W + 20; }
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x - 2, drop.y + drop.length);
+        ctx.stroke();
+      }
+    }
+
+    function drawBike() {
+      // Rider position
+      const bikeX = W * 0.3;
+      const bikeY = H * 0.78 + 8; // back wheel sits just above road surface
+      const angle = -state.angle; // negative because canvas Y is flipped
+
+      ctx.save();
+      ctx.translate(bikeX, bikeY);
+      ctx.rotate(angle);
+
+      // shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath();
+      ctx.ellipse(20, 25, 55, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ----- DIRT BIKE -----
+      const wheelR = 22;
+      const tireColor = '#1a1a1a';
+      const treadColor = '#2a2a2a';
+
+      // back wheel
+      ctx.fillStyle = tireColor;
+      ctx.beginPath(); ctx.arc(-25, 0, wheelR, 0, Math.PI * 2); ctx.fill();
+      // tread blocks
+      ctx.fillStyle = treadColor;
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + state.bgOffset * 0.05;
+        ctx.fillRect(-25 + Math.cos(a) * (wheelR - 4) - 2, Math.sin(a) * (wheelR - 4) - 2, 4, 4);
+      }
+      // hub
+      ctx.fillStyle = '#888';
+      ctx.beginPath(); ctx.arc(-25, 0, 5, 0, Math.PI * 2); ctx.fill();
+
+      // front wheel
+      ctx.fillStyle = tireColor;
+      ctx.beginPath(); ctx.arc(35, 0, wheelR, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = treadColor;
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + state.bgOffset * 0.05;
+        ctx.fillRect(35 + Math.cos(a) * (wheelR - 4) - 2, Math.sin(a) * (wheelR - 4) - 2, 4, 4);
+      }
+      ctx.fillStyle = '#888';
+      ctx.beginPath(); ctx.arc(35, 0, 5, 0, Math.PI * 2); ctx.fill();
+
+      // frame — dirt bike chunky body
+      ctx.fillStyle = '#d4ff3a'; // moto green-yellow plastics
+      ctx.beginPath();
+      ctx.moveTo(-20, -8);
+      ctx.lineTo(15, -22);
+      ctx.lineTo(30, -15);
+      ctx.lineTo(28, -5);
+      ctx.lineTo(-5, -2);
+      ctx.closePath();
+      ctx.fill();
+
+      // gas tank/seat (darker)
+      ctx.fillStyle = '#2a2a2a';
+      ctx.beginPath();
+      ctx.moveTo(-22, -10);
+      ctx.lineTo(0, -18);
+      ctx.lineTo(5, -14);
+      ctx.lineTo(-15, -6);
+      ctx.closePath();
+      ctx.fill();
+
+      // forks
+      ctx.strokeStyle = '#aaa';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(35, 0);
+      ctx.lineTo(25, -18);
+      ctx.stroke();
+
+      // handlebar
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(25, -18);
+      ctx.lineTo(20, -28);
+      ctx.lineTo(32, -28);
+      ctx.stroke();
+
+      // ----- RIDER -----
+      // body
+      ctx.fillStyle = '#1f3a5c'; // PNW blue jacket
+      ctx.beginPath();
+      ctx.moveTo(-2, -18);
+      ctx.lineTo(10, -32);
+      ctx.lineTo(18, -30);
+      ctx.lineTo(20, -22);
+      ctx.lineTo(5, -14);
+      ctx.closePath();
+      ctx.fill();
+
+      // helmet
+      ctx.fillStyle = '#ff5a4e';
+      ctx.beginPath();
+      ctx.arc(12, -36, 8, 0, Math.PI * 2);
+      ctx.fill();
+      // visor
+      ctx.fillStyle = 'rgba(60, 80, 100, 0.85)';
+      ctx.beginPath();
+      ctx.arc(15, -36, 5, -Math.PI * 0.3, Math.PI * 0.4);
+      ctx.fill();
+
+      // arm to handlebar
+      ctx.strokeStyle = '#1f3a5c';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(14, -26);
+      ctx.lineTo(26, -28);
+      ctx.stroke();
+
+      // leg
+      ctx.strokeStyle = '#1f3a5c';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(5, -16);
+      ctx.lineTo(-5, -2);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // ============================================================
+    // MAIN LOOP
+    // ============================================================
+    function loop() {
+      if (!state.running) return;
+
+      // advance world
+      state.bgOffset += CONFIG.SPEED * 0.2;
+      state.midOffset += CONFIG.SPEED * 0.6;
+      state.fgOffset += CONFIG.SPEED;
+
+      // physics
+      updatePhysics();
+      if (!state.running) return;
+
+      // render
+      drawSky();
+      drawMountains();
+      drawTrees();
+      drawRoadSign();
+      drawRoad();
+      drawRain();
+      drawBike();
+
+      requestAnimationFrame(loop);
+    }
+
+    // Initial scene render (behind start screen)
+    initRain();
+    drawSky();
+    drawMountains();
+    drawTrees();
+    drawRoad();
+    drawRain();
+  </script>
+
+</body>
+</html>
